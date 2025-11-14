@@ -1,0 +1,481 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "46a3b828-2eb3-48c6-a3a7-62e5402844b7",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        -64
+      ],
+      "id": "c226f9e2-2307-4411-baac-7b7d891d574b",
+      "name": "Webhook",
+      "webhookId": "46a3b828-2eb3-48c6-a3a7-62e5402844b7"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query[\"hub.challenge\"] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -208,
+        -64
+      ],
+      "id": "23cf4554-e552-4d75-bbfa-ad8b9aed091e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        160
+      ],
+      "id": "d0f0c37b-9c8b-4de4-8fce-fe61a9a73b71",
+      "name": "Execute"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v24.0/{{ $json.ig }}/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        160
+      ],
+      "id": "94bedbe1-066d-465e-8150-d4d8327fbc23",
+      "name": "prepare",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "adkkfjadfdfdkfdkdf",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Публикация\nhttps://developers.facebook.com/docs/instagram-platform/content-publishing\n### Этап 1  Публикация контейнера медиа файла:\nhttps://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media#creating\nВ случае graph.instagram.com/v24.0/{ig-user-id}/media ({ig-user-id} — ID пользователя Instagram Business/Creator).\n\nПараметры:\n- image_url (для фото) или video_url (для видео)\n- caption (опционально)\n- access_token\n\n### Этап 2 Публикация созданного контейнера: \nhttps://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media_publish#creating\nPOST https://graph.instagram.com/v24.0/{ig-user-id}/media_publish\nПараметры:\n- creation_id = ID контейнера, полученного на шаге 1\n- access_token\n\n",
+        "height": 512,
+        "width": 976
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -416,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "9b9b009a-7d4a-414d-88dc-e9dfee8a1c14",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v24.0/{{ $('user').item.json.ig }}/media_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        912,
+        176
+      ],
+      "id": "57d8faf4-590d-4dea-89ed-babaf3fd3e38",
+      "name": "publish",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "adkkfjadfdfdkfdkdf",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.instagram.com/v24.0/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "status_code"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        400,
+        160
+      ],
+      "id": "9092e273-4858-4fbb-ad52-0cf5f3ffc4ce",
+      "name": "status",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "adkkfjadfdfdkfdkdf",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        336
+      ],
+      "id": "f1bd0ac2-b2a6-49aa-a598-466c7bdf0ac6",
+      "name": "Wait",
+      "webhookId": "eb1ab7f2-13e7-4c6d-ac4c-6df796938cb8"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "25f8ba41-8f38-4d24-ba10-fde61f240a34",
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "ERROR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ERROR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "PUBLISHED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5d8cca28-65b7-4822-a880-53651e621c92"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PUBLISHED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0ca3fedd-a66f-4035-8439-57fc6fceddbd",
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "FINISHED",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FINISHED"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c6c6d2ba-e06b-4072-be9b-fd244e9733b1",
+                    "leftValue": "={{ $json.status_code }}",
+                    "rightValue": "IN_PROGRESS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PROGRESS"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        608,
+        128
+      ],
+      "id": "2ae4e00e-7972-416f-b831-252c360c19c2",
+      "name": "Switch"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        912,
+        0
+      ],
+      "id": "bd3af788-fc78-4dfa-a1a7-155d397ffccb",
+      "name": "No Operation"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MCmBFh48XbEPebd6HtLw3ufbpeXDU9aX0iH-9U68dBs",
+          "mode": "list",
+          "cachedResultName": "Публикация в инстаграм",
+          "cachedResultUrl": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -208,
+        160
+      ],
+      "id": "ddf856d9-186f-4150-bc6a-e9da35524c45",
+      "name": "Get sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "adfadfsdfasdfas",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "844e53a6-29ab-44bb-99e1-325ce2c7a605",
+              "name": "ig",
+              "value": "17841478265784260",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        160
+      ],
+      "id": "423d6712-79d4-400a-ab9f-b65ac1ec2243",
+      "name": "user"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute": {
+      "main": [
+        [
+          {
+            "node": "Get sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare": {
+      "main": [
+        [
+          {
+            "node": "status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get sheet": {
+      "main": [
+        [
+          {
+            "node": "user",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "user": {
+      "main": [
+        [
+          {
+            "node": "prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Execute": [
+      {}
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bfee1e9947ac5f7d2abd5472a01de5a0b8a85dc5269317edf7f2b2f30744c2a5"
+  }
+}
