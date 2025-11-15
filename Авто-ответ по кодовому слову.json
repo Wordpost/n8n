@@ -1,0 +1,829 @@
+{
+  "name": "Авто-ответ по кодовому слову",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b193966c-6df9-4def-955a-071dbcb9b19d",
+              "leftValue": "={{ $json.signatureHeader }}",
+              "rightValue": "={{ $json.computed }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        1088
+      ],
+      "id": "464f6c74-3c8e-4995-9876-3d0d945f4c5f",
+      "name": "IS VALID"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function node (n8n)\nconst crypto = require('crypto');\n\nconst signatureHeader = $input.first().json.headers[\"x-hub-signature-256\"];\n\nif (!signatureHeader) {\n  throw new Error('Missing X-Hub-Signature-256 header');\n}\n\n// 2) Берём \"сырое\" тело из бинарного поля.\n// items[0].binary.data.data (base64)\nlet rawBuffer;\nconst binary = items[0].binary;\nconst data = items[0].json;\n\nif (binary && binary.data && binary.data.data) {\n  rawBuffer = Buffer.from(binary.data.data, 'base64');\n} else if (binary && Object.keys(binary).length > 0) {\n  // если имя другое — берём первый бинарный ключ\n  const key = Object.keys(binary)[0];\n  rawBuffer = Buffer.from(binary[key].data, 'base64');\n} else if (data && data.body) {\n  // fallback: если всё же нет бинаря, берём строку body (меньше надёжности)\n  rawBuffer = Buffer.from(JSON.stringify(data.body), 'utf8');\n} else {\n  return [{ json: { signatureHeader } }];\n}\n\n// 3) Вычисляем HMAC-SHA256 по original bytes\nconst appSecret = 'appSecret'; // вставь здесь App Secret (не access token)\nconst computed = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBuffer).digest('hex');\n\n// 4) Сравниваем в безопасном режиме (timing-safe)\nconst equals = crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(signatureHeader));\n\nreturn [{ json: { ok: equals, computed, signatureHeader, body: data.body } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        1088
+      ],
+      "id": "df252973-f531-4002-9637-b6c4a611178a",
+      "name": "validate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const entries = items[0].json.body.entry || [];\nconst result = [];\n\nfor (const entry of entries) {\n  const changes = entry?.changes || null;\n  const messaging = entry?.messaging || null;\n  if (changes) {\n    for (const change of changes) {\n      result.push({\n        json: {\n          object: items[0].json.body.object,\n          entry_id: entry.id,\n          field: change.field,\n          time: entry.time,\n          ...change.value\n        }\n      });\n    }\n  }\n  if (messaging) {\n    for (const message of messaging) {\n      result.push({\n        json: {\n          object: items[0].json.body.object,\n          entry_id: entry.id,\n          time: entry.time,\n          ...message\n        }\n      });\n    }\n  }\n}\n\nreturn result;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        928
+      ],
+      "id": "beb6cf82-c638-4aa5-ac39-4c8e04a438a8",
+      "name": "entry"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        1616
+      ],
+      "id": "ba32dcfd-80b3-45f4-9f2f-5c7556aab177",
+      "name": "No Operation"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json?.field }}",
+                    "rightValue": "comments",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1ded6a28-e2a2-4f44-8102-3c043f535a93"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "comments"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e1b187df-a75a-4a38-8e9e-b3cd02f21308",
+                    "leftValue": "={{ $json.postback }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "postback"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1200,
+        928
+      ],
+      "id": "c391731b-d180-45a1-8a0d-94f4d5b97887",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aae58dcf-fac2-4078-afeb-05b34a822d00",
+              "leftValue": "={{ $json.postback.payload }}",
+              "rightValue": "=session_{{ $json.sender.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        1280
+      ],
+      "id": "28274238-9781-497b-a95f-947f151bce86",
+      "name": "CHECK"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v24.0/{{ $json.entry_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"recipient\":{ \n       \"comment_id\": \"{{ $json.id }}\" \n   },\n   \"message\": { \n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"button\",\n        \"text\": \"Здравствуй! Хочешь получить гайд на спину? Подпишись на мой аккаунт и нажми нопку\",\n        \"buttons\": [\n          {\n            \"type\": \"postback\",\n            \"title\": \"Получить\",\n            \"payload\": \"session_{{ $json.from.id }}\"\n          }\n        ]\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1648,
+        560
+      ],
+      "id": "b881dc9c-9e0b-4cbd-818a-2cb32c4b985a",
+      "name": "SEND MSG",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oYtIVG86U1M0y8Ry",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.instagram.com/v24.0/{{ $('entry').first().json.entry_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "followers_count"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1648,
+        944
+      ],
+      "id": "0a4ecfb4-354b-49ab-b5b4-5bce6f5e65e8",
+      "name": "check",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oYtIVG86U1M0y8Ry",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=session_{{ $json.recipient_id }}",
+        "value": "={{ $json.followers_count }}",
+        "keyType": "string",
+        "expire": true,
+        "ttl": "={{ 60 * 60 * 24 * 7 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        368
+      ],
+      "id": "6451f567-0ea5-4e38-9fb2-6c83cc29147f",
+      "name": "set count",
+      "credentials": {
+        "redis": {
+          "id": "C6OL4yv3HKwEh87U",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1872,
+        448
+      ],
+      "id": "3541d3c3-236d-4f01-95f1-a6f2fbfcec9e",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.instagram.com/v24.0/{{ $('entry').first().json.entry_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "followers_count"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1648,
+        368
+      ],
+      "id": "7917464e-a93d-4742-8c5b-3b3b2cb32db8",
+      "name": "GET COUNT",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oYtIVG86U1M0y8Ry",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "save_count",
+        "key": "=session_{{ $json.sender.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        1136
+      ],
+      "id": "d4d93e85-9b26-4938-9179-56af9601c096",
+      "name": "get count",
+      "credentials": {
+        "redis": {
+          "id": "C6OL4yv3HKwEh87U",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f6f4fc58-6947-4ce2-a5d0-e11ab1c5e066",
+              "leftValue": "={{ $json.followers_count }}",
+              "rightValue": "={{ $json.save_count }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        1120
+      ],
+      "id": "d68e12a9-6255-4712-a003-48f808562dc1",
+      "name": "NOT F"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v24.0/{{ $json.entry_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"recipient\":{ \n       \"id\": \"{{ $json.sender.id }}\" \n   },\n   \"message\": { \n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"button\",\n        \"text\": \"Я не увидела пописки на аккаунт 😔 Подпишись, чтобы получить уроки\",\n        \"buttons\": [\n          {\n            \"type\": \"postback\",\n            \"title\": \"Готово\",\n            \"payload\": \"session_{{ $json.sender.id }}\"\n          }\n        ]\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2320,
+        1024
+      ],
+      "id": "7dda117f-b5b7-4c76-a2ca-0d6f5a48fa79",
+      "name": "RESEND MSG",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oYtIVG86U1M0y8Ry",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/v24.0/{{ $json.entry_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"recipient\":{ \n       \"id\": \"{{ $json.sender.id }}\" \n   },\n   \"message\": { \n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"button\",\n        \"text\": \"Отлично! Нажимай на кнопку ниже, чтобы приступить к просмотру гайда 👇\",\n        \"buttons\": [\n          {\n            \"type\": \"web_url\",\n            \"url\": \"https://t.me/galia_mas_bot?start=spina\",\n            \"title\": \"🔗 Гайд\"\n          }\n        ]\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2320,
+        1216
+      ],
+      "id": "1b0b5f6f-3fe4-4573-8812-5a18c7d45b71",
+      "name": "SEND LESSON",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "oYtIVG86U1M0y8Ry",
+          "name": "Bearer Auth instagram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1872,
+        1216
+      ],
+      "id": "6402dce4-92d3-4eaf-a6c5-e4a0dbb49b7b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "46a3b828-2eb3-48c6-a3a7-62e5402844b7",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        304,
+        1088
+      ],
+      "id": "e4b5e08d-3d92-4537-997d-79bebd29e148",
+      "name": "Webhook",
+      "webhookId": "38d87b8b-d85c-42be-a747-29b70e12f261"
+    },
+    {
+      "parameters": {
+        "content": "## Дополнительные ссылки\n\nОтправка ответа на комментарий:\nhttps://developers.facebook.com/docs/instagram-platform/private-replies/\n\nОб отправке личных сообщений\nhttps://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/messaging-api/generic-template/\n\nПро кол-во подписчиков\nhttps://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/",
+        "height": 256,
+        "width": 896
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        1360
+      ],
+      "typeVersion": 1,
+      "id": "534537e7-c798-4e76-8838-51daaea718d0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "daac582a-1cfc-47d0-897c-8555e0debd2b",
+              "leftValue": "={{ $json.text.toLowerCase() }}",
+              "rightValue": "слово",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        560
+      ],
+      "id": "4350ed4c-ee4c-4ed4-86b6-1593d9974933",
+      "name": "IF word"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        752
+      ],
+      "id": "68a42f77-5ad4-4914-b450-bf6e452402d8",
+      "name": "do nothing"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "68w98QHm75p84bAw",
+          "mode": "list",
+          "cachedResultName": "session",
+          "cachedResultUrl": "/projects/1EXJAlQVnwo7uqn2/datatables/68w98QHm75p84bAw"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "=session_{{ $json.recipient_id }}",
+            "save_count": "={{ $json.followers_count }}"
+          },
+          "matchingColumns": [
+            "session_id"
+          ],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "save_count",
+              "displayName": "save_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        656
+      ],
+      "id": "374b64f5-2cbd-43a5-96ae-a952cf8091bc",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "68w98QHm75p84bAw",
+          "mode": "list",
+          "cachedResultName": "session",
+          "cachedResultUrl": "/projects/1EXJAlQVnwo7uqn2/datatables/68w98QHm75p84bAw"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "session_id",
+              "keyValue": "=session_{{ $json.sender.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        1424
+      ],
+      "id": "c2990f32-590b-4e71-8de6-63b27edb8926",
+      "name": "Get row"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "IS VALID": {
+      "main": [
+        [
+          {
+            "node": "entry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate": {
+      "main": [
+        [
+          {
+            "node": "IS VALID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "entry": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "IF word",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CHECK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CHECK": {
+      "main": [
+        [
+          {
+            "node": "get count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          },
+          {
+            "node": "check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEND MSG": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "check": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "set count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET COUNT": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get count": {
+      "main": [
+        []
+      ]
+    },
+    "NOT F": {
+      "main": [
+        [
+          {
+            "node": "RESEND MSG",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SEND LESSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "NOT F",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF word": {
+      "main": [
+        [
+          {
+            "node": "GET COUNT",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SEND MSG",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        []
+      ]
+    },
+    "Get row": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4f2fe724-3fb7-433b-98e9-5c7ad843b43a",
+  "meta": {
+    "instanceId": "bfee1e9947ac5f7d2abd5472a01de5a0b8a85dc5269317edf7f2b2f30744c2a5"
+  },
+  "id": "toL5Hxoix8w3A0wN",
+  "tags": []
+}
