@@ -533,7 +533,7 @@
     },
     {
       "parameters": {
-        "chatId": "-4629713021",
+        "chatId": "-12365985",
         "text": "=При работе Агента произошла ошибка :()",
         "additionalFields": {
           "appendAttribution": false
@@ -586,7 +586,7 @@
     },
     {
       "parameters": {
-        "chatId": "-1002736117626",
+        "chatId": "-123456789",
         "text": "={{ $json.output || \"Пустой ответ\" }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -1732,7 +1732,7 @@
     },
     {
       "parameters": {
-        "chatId": "-1002736117626",
+        "chatId": "-123456789",
         "text": "={{ $json.output || \"Пустой ответ\" }}",
         "additionalFields": {
           "appendAttribution": false,
