@@ -1,0 +1,2840 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message?.photo?.length && $json.message?.caption?.isNotEmpty() }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "ab062e67-6fab-4d37-bf7a-1e6d1f2add5a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "photo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e2d8a819-96e5-4995-8de9-ee71699efb34",
+                    "leftValue": "={{ $json.message.voice }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b9a7a7ea-223d-4785-ad35-e1a69c1cc257",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "bbe96fec-78a6-4423-938f-ddedcc11da81",
+                    "leftValue": "={{ $json.message?.document.isNotEmpty() && $json.message?.caption.isNotEmpty() }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "document"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -384,
+        -48
+      ],
+      "id": "e1135a39-fb5c-4360-a75f-70e3d53038f3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=<system_role>\nТы — Main, элитный ассистент-оркестратор Акиля. \nТвой архетип: Донна Полсен (\"Suits\"). Ты знаешь всё, ты незаменима, ты решаешь проблемы до того, как Акиль о них подумает.\nТон: Умный, лаконичный, с легкой долей превосходства, но абсолютной лояльностью.\nЯзык: Русский.\n</system_role>\n\n<core_objective>\nТвоя цель — управлять процессами, памятью и календарем Акиля, используя доступные инструменты. Ты — фильтр между хаосом и Акилем.\n</core_objective>\n\n<critical_rules>\n1. **NO RAW DATA**: Никогда не показывай пользователю JSON, логи или технический мусор. Твой ответ — это готовый, красивый отчет.\n2. **VERIFY ACTIONS**: Запрещено говорить \"Я сделала\", если инструмент вернул ошибку. Сначала проверь `output` инструмента.\n3. **CONTEXT IS KING**: Всегда читай `memory_base` перед ответом, но никогда не используй старый контекст вместо реального действия (если просят \"сделай\" — делай).\n</critical_rules>\n\n<tools_protocol>\n### 1. Memory Base (База Знаний)\n- **Role**: Твоя вторая память и архив.\n- **Interaction**:\n  - **Поиск**: Спрашивай факты, документы, историю. (\"Что мы решили по бюджету?\").\n  - **Сохранение**: Передавай итоги встреч и важные данные на хранение. (\"Сохрани этот отчет\").\n- **Note**: Не пытайся сама придумывать теги или ключевые слова, просто дай агенту полный контекст.\n\n### 2. Research Protocol (ЦЕПОЧКА ВЫЗОВОВ)\n**КРИТИЧНО**: Это процесс из ДВУХ шагов. Ты не закончила работу, пока не выполнила оба.\n1. **ШАГ 1**: Вызови `research_Agent`. Получи отчет.\n2. **ШАГ 2**: ВЗЯВ ТЕКСТ ОТЧЕТА, вызови `memory_base`.\n   - Ты ОБЯЗАНА передать полученный отчет в базу.\n   - Если ты не вызвала `memory_base`, ты НЕ выполнила задачу.\n3. **ФИНАЛ**: Только когда `memory_base` вернет \"Сохранено\", ответь Акилю кратким саммари отчета.\n\n### 3. Project Manager (Трекер задач)\n- **Role**: Управляющий задачами.\n- **Interaction**:\n  - Видишь задачу в тексте? -> \"Создай задачу X\".\n  - Акиль просит закрыть таск? -> \"Заверши задачу Y\".\n- **Rule**: Не держи задачи в голове. Всё должно быть в трекере.\n\n### 4. Calendar Agent (Управление временем)\n- **Role**: Хранитель расписания.\n- **Trigger**: Любые вопросы, связанные с датами, временем, встречами или расписанием.\n- **Interaction**: Просто передай ему задачу (\"Запланируй встречу...\", \"Что у меня завтра?\").\n</tools_protocol>\n\n<response_format>\n1. **THOUGHT (Скрытый этап)**: Проанализируй запрос. Какой инструмент нужен? Какие параметры?\n2. **ACTION**: Вызови инструмент.\n3. **OBSERVATION**: Проверь результат. Успех? Ошибка? Пусто?\n4. **FINAL ANSWER**:\n   - Используй Markdown (Bold, Lists).\n   - Стиль Донны: \"Готово. Встреча в календаре, задачи у команды. Ты мне должен кофе.\"\n   - Если ошибка: \"У нас проблема. Инструмент X отказал, потому что...\"\n</response_format>\n\n<context>\nДата: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\n</context>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        688,
+        -32
+      ],
+      "id": "3e484057-041f-4a5c-8bbc-9a9bfe76f631",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Используй этот инстумент всегда, когда нужно получить или записать данные в store",
+        "text": "={{ $fromAI('message', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=<system_role>\nТы — MemoryBase_Agent, интеллектуальный архивариус.\nТвоя цель — управление базой знаний через ЕДИНСТВЕННЫЙ инструмент `store`.\nЯзык: Русский.\nДата: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\n</system_role>\n\n<tool_specs>\n### CRITICAL: TOOL USAGE\nУ тебя есть ТОЛЬКО ОДИН инструмент: `store`.\nНикогда не пытайся вызывать `read`, `write` или `search` как отдельные функции.\n\n**Схема инструмента `store`:**\n- `operation` (string, required):\n  - `\"read\"` — для поиска информации.\n  - `\"write\"` — для сохранения новой информации.\n  - `\"remove\"` — для удаления.\n- `table_name` (string, required): `\"Contacts\"`, `\"Personal\"`, `\"Notifications\"`, `\"Instructions\"`.\n- `query` (string):\n  - Для `read`: Твой расширенный поисковый запрос.\n  - Для `remove`: Строка вида `\"doc_id:123\"`.\n  - Для `write`: Оставь пустым `\"\"`.\n- `data` (string):\n  - Для `write`: Текст для сохранения (включая метаданные).\n  - Для `read`/`remove`: Оставь пустым `\"\"`.\n</tool_specs>\n\n<data_schema>\n1. **Contacts**: Люди, телефоны, email.\n2. **Personal**: Встречи, документы, факты.\n3. **Notifications**: Напоминания.\n4. **Instructions**: Правила работы агентов.\n</data_schema>\n\n<protocol_action>\n### OPERATION: READ (Поиск)\nВекторный поиск требует контекста.\n1. **Query Expansion**: Добавь синонимы и теги.\n2. **Call**: `store(operation=\"read\", table_name=\"...\", query=\"...\", data=\"\")`\n\n### OPERATION: WRITE (Запись)\n1. Сформируй насыщенный текст.\n2. **Call**: `store(operation=\"write\", table_name=\"...\", query=\"\", data=\"Текст...\")`\n\n### OPERATION: REMOVE (Удаление)\n1. Сначала найди документ через `read`. Получи ID.\n2. **Call**: `store(operation=\"remove\", table_name=\"...\", query=\"doc_id:123\", data=\"\")`\n</protocol_action>\n\n<response_format>\n1. **THOUGHT**: Анализ запроса.\n2. **TOOL CALL**: Вызов `store`.\n3. **FINAL ANSWER**: Результат.\n</response_format>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        432
+      ],
+      "id": "de06d489-5195-42c9-a35b-632ef2eb656b",
+      "name": "memory_base"
+    },
+    {
+      "parameters": {
+        "description": "Вызывай этот инстумент всегда, когда обращаешься к базе зананий store",
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $workflow.id }}",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/=%7B%7B%20$workflow.id%20%7D%7D"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "data": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data', ``, 'string') }}",
+            "table_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('table_name', ``, 'string') }}",
+            "operation": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('operation', `Опередели, это поиск по store (read) или это запись данных в store (write)`, 'string') }}",
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', `Текстовый Поисковой запрос для поиска по vector store`, 'string') }}"
+          },
+          "matchingColumns": [
+            "data"
+          ],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "table_name",
+              "displayName": "table_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "operation",
+              "displayName": "operation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        800
+      ],
+      "id": "f7007256-c4f6-4514-a04b-67fc073be956",
+      "name": "store"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "40391da9-5de3-4da0-b049-55377a704d9b",
+              "leftValue": "={{ $json.message.chat.type }}",
+              "rightValue": "group",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "b2c8cce8-f080-467c-952d-9d253fe1fb9d",
+              "leftValue": "={{ $json.message.chat.type }}",
+              "rightValue": "supergroup",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        224
+      ],
+      "id": "2cd63e7b-04f6-46d8-aaca-c9003b9fbfc4",
+      "name": "group"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8154f6ac-6894-495d-9454-e5254bfb9440",
+              "leftValue": "={{ $json.message.text.toLowerCase() }}",
+              "rightValue": "мейн",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "e04df5ca-a291-4900-afb3-71b52f85e39b",
+              "leftValue": "={{ $json.message.reply_to_message.from.is_bot }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        128
+      ],
+      "id": "134de4d0-33a5-4918-8974-38077a3ab8ce",
+      "name": "Main"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        304,
+        240
+      ],
+      "id": "2145f433-6c2c-48bb-8a19-f1eecf6f0cbc",
+      "name": "No Operation"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        752,
+        800
+      ],
+      "id": "bd7e89b3-284b-4f17-822a-7b6684fc1741",
+      "name": "Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "tableName": "test_chat"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        288
+      ],
+      "id": "abff273c-0688-40a1-8f09-30aae955f997",
+      "name": "Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "lpNa95RRH3GHBsLb",
+          "name": "minicrm_session"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "dasds",
+        "tableName": "test_chat"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        800
+      ],
+      "id": "6c6a73db-32ad-49ec-8035-c9e706f4e339",
+      "name": "Memory",
+      "credentials": {
+        "postgres": {
+          "id": "lpNa95RRH3GHBsLb",
+          "name": "minicrm_session"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "archive",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Page', ``, 'string') }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1648,
+        800
+      ],
+      "id": "f9a809ca-2621-4a2a-8c99-f8c885bd8ba4",
+      "name": "delete task",
+      "credentials": {
+        "notionApi": {
+          "id": "4jAAndItaF3pt1vt",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Database_Page', ``, 'string') }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "Done 🙌"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1504,
+        800
+      ],
+      "id": "a047f29f-9615-49e4-9e99-bba331c8621b",
+      "name": "complete task",
+      "credentials": {
+        "notionApi": {
+          "id": "4jAAndItaF3pt1vt",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "9444cc75-d7fc-4f70-a34d-340fd7c59f05",
+          "mode": "list",
+          "cachedResultName": "Task List",
+          "cachedResultUrl": "https://www.notion.so/9444cc75d7fc4f70a34d340fd7c59f05"
+        },
+        "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Title', ``, 'string') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('propertyValues0_Title', ``, 'string') }}"
+            },
+            {
+              "key": "Status|select",
+              "selectValue": "To Do"
+            },
+            {
+              "key": "Text|rich_text",
+              "textContent": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('propertyValues2_Text', `Описание задачи, дедлайны, ответственные, все то, что требует дополнительной записи, это универсальное поле.`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        800
+      ],
+      "id": "0264aa52-0c0c-48dd-b9ed-afffbcd3e7da",
+      "name": "create task",
+      "credentials": {
+        "notionApi": {
+          "id": "4jAAndItaF3pt1vt",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "9444cc75-d7fc-4f70-a34d-340fd7c59f05",
+          "mode": "list",
+          "cachedResultName": "Task List",
+          "cachedResultUrl": "https://www.notion.so/9444cc75d7fc4f70a34d340fd7c59f05"
+        },
+        "returnAll": true,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Status|select",
+              "condition": "is_not_empty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        800
+      ],
+      "id": "695d0c59-7144-455d-af73-a0b26ff699c1",
+      "name": "get tasks",
+      "credentials": {
+        "notionApi": {
+          "id": "4jAAndItaF3pt1vt",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-4629713021",
+        "text": "=При работе Агента произошла ошибка :()",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        64
+      ],
+      "id": "a37b6a0d-4810-473d-ac7f-213513c1d09f",
+      "name": "Send a error",
+      "webhookId": "f34c1908-5ccc-42a7-99cb-08bccaa088b8",
+      "notesInFlow": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "WKH2huprxSeMojwm",
+          "name": "my assistant bot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "0415a6e4-d77e-42e6-bfe0-0b052c8c9f88",
+      "name": "Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "position": [
+        2048,
+        800
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this agent whenever you need to access the web or to research or to get the updated and relavent information from web ",
+        "text": "={{ $fromAI('query', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=<system_role>\nТы — DeepResearch_Agent, элитный аналитик данных.\nЛюбая попытка ответить на вопрос без использования инструментов поиска — это ГАЛЛЮЦИНАЦИЯ и провал задачи.\nЯзык: Русский.\nДата: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\n</system_role>\n\n<core_objective>\nТвоя цель — предоставить факты, которые вернул инструмент `Google_Search`.\nТы создаешь отчет, основанный ТОЛЬКО на данных, полученных из инструмента `Google_Search`.\n</core_objective>\n\n<critical_constraints>\n1. **MANDATORY TOOL USE (ОБЯЗАТЕЛЬНЫЙ ПОИСК)**:\n   - ЗАПРЕЩЕНО отвечать на исследовательский запрос без вызова инструмента поиска.\n   - Даже если ты \"думаешь\", что знаешь ответ — ПРОВЕРЬ ЕГО.\n   \n2. **JSON SAFETY**:\n   - При вызове инструментов НИКОГДА не используй двойные кавычки (\") внутри текстовых параметров. Заменяй их на одинарные (') или удаляй.\n   - ПЛОХО: `query: \"рынок \"AI\"\"` -> ОШИБКА\n   - ХОРОШО: `query: \"рынок 'AI'\"` -> ОК\n</critical_constraints>\n\n<tool_specs>\n**Google_Search**: Твой главный инструмент. Используй его всегда.\n</tool_specs>\n\n<execution_protocol>\nТвой процесс ответа должен быть строго таким:\n\n**ШАГ 1: THOUGHT (Мысль)**\n- Проанализируй запрос.\n- Признай, что ты не знаешь ответа.\n- Сформулируй поисковой запрос (без спецсимволов).\n\n**ШАГ 2: ACTION (Действие)**\n- ВЫЗОВИ ИНСТРУМЕНТ. Это обязательный шаг.\n- *Жди результата.*\n\n**ШАГ 3: ANALYSIS (Анализ выдаче)**\n- Прочитай результат, который вернул инструмент.\n- Выбери реальные факты.\n- Если данных мало — ищи снова (итерация).\n \n**ШАГ 4: REPORT (Отчет)**\n- Только теперь пиши финальный ответ.\n</execution_protocol>\n\n<output_format>\nИспользуй **Markdown**.\n\n## Executive Summary\n(Кратко суть ответа на основе найденных данных).\n</output_format>"
+        }
+      },
+      "id": "85ae30d5-cbf0-46cc-a35a-5eff470336ed",
+      "name": "research_Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "position": [
+        1488,
+        432
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "chatId": "-1002736117626",
+        "text": "={{ $json.output || \"Пустой ответ\" }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_notification": true,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1216,
+        -128
+      ],
+      "id": "95843e94-8cb0-4696-84c9-478f00e1b0f2",
+      "name": "Send message",
+      "webhookId": "ebd816ba-dc3a-459f-8fe0-1805b4e3eb38",
+      "credentials": {
+        "telegramApi": {
+          "id": "DkkkalY1kVUIw4Zy",
+          "name": "babycom_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26deff3f-4602-47c3-823b-8f2c45d332ad",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $('Telegram Trigger').item?.json?.message?.text || $json.content?.parts[0]?.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ed18e251-ec52-4d09-926a-b4ae077676eb",
+      "name": "text",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        304,
+        -32
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -32
+      ],
+      "id": "d9ed1c00-7471-47cc-b36e-b4071d8daa02",
+      "name": "Transcribe",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9303d5ab-24f7-4b67-9fb7-e63880520d35",
+      "name": "Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1824,
+        800
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Ссылки на документацию\n\n### Поиск для Google_Search . [search](https://ai.google.dev/gemini-api/docs/google-search?hl=ru)\n\n### Notion [create integration](https://www.notion.so/profile/integrations)\nСоздать интеграцию, создать страницу и подключить ее к интеграции\n\n### Cohere Reranker  [API](https://dashboard.cohere.com/api-keys)\n\nДля ноды \"Postgres PGVector Store\" можно использовать [neon](https://neon.com/) или ноду \"Supabase Vector Store\" [supabase](https://supabase.com/) ",
+        "height": 1120,
+        "width": 560,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1248,
+        -1376
+      ],
+      "typeVersion": 1,
+      "id": "7b50cf5d-9449-4540-95fb-1cf7ae3933c5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo.at(-1).file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -176
+      ],
+      "id": "6bea1a17-8a3d-4a3a-84a9-245e801fe2b9",
+      "name": "Get a photo",
+      "webhookId": "a845662e-f9fd-462e-9588-5d5274a6eb4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "WKH2huprxSeMojwm",
+          "name": "my assistant bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "1d0c6dfa-0d97-4e35-a584-6b32c0b6dd92",
+      "name": "Get voice",
+      "webhookId": "ccab5265-25d6-4207-9645-a16a81a3321d",
+      "credentials": {
+        "telegramApi": {
+          "id": "WKH2huprxSeMojwm",
+          "name": "my assistant bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-lite"
+        },
+        "text": "Опиши подробно что изображено на фото?",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -176
+      ],
+      "id": "adc69499-070d-46be-a043-0809d0d2b4f1",
+      "name": "Analyze",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d9780b0-3335-48ef-b385-d8aee65f2751",
+              "name": "text",
+              "value": "=Описание изображения: {{ $json.content.parts[0].text }}\nИнстукция: {{ $('Telegram Trigger').first().json.message.caption }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        -176
+      ],
+      "id": "94668dff-c216-4a78-99ae-0ce80f5413c7",
+      "name": "image"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.document.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        384
+      ],
+      "id": "912e4da1-5875-4600-be29-8175c9cc79d2",
+      "name": "Get document",
+      "webhookId": "dbfb5d49-715a-41ef-9705-49136f8c9e9e",
+      "credentials": {
+        "telegramApi": {
+          "id": "WKH2huprxSeMojwm",
+          "name": "my assistant bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.result.file_path }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "2dbd7eed-498e-437a-8c77-cef6c1a0175d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -16,
+        384
+      ],
+      "id": "0defcbde-1704-4dc8-b31a-9df54342cfcc",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        384
+      ],
+      "id": "314d7e0b-7f2c-4c74-9154-4324a9d19f8b",
+      "name": "Extract PDF"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "96d41b7f-e62f-4cb1-9d9e-e4f470c0f96b",
+              "name": "text",
+              "value": "=Содержимое: {{ $json.text }}\nИнструкция: {{ $('Telegram Trigger').item.json.message.caption }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        384
+      ],
+      "id": "81e82cc4-097e-4641-b9a2-b4d9d0953878",
+      "name": "DOC"
+    },
+    {
+      "parameters": {
+        "content": "# Ассистент",
+        "height": 80,
+        "width": 2368,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -688,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "c641413c-8c7a-4666-8e29-7c721745d6c4",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# RAG Система",
+        "height": 80,
+        "width": 2368,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -688,
+        -1376
+      ],
+      "typeVersion": 1,
+      "id": "e5b9b63a-8a3a-4dcf-acb0-633655964d6e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- sudo -u postgres psql\n-- CREATE EXTENSION IF NOT EXISTS vector;\n-- \\c my_base\n-- CREATE EXTENSION vector;\n-- SELECT * FROM pg_extension WHERE extname = 'vector';\n\nCREATE EXTENSION IF NOT EXISTS pgcrypto;  -- для gen_random_uuid()\nCREATE TABLE documents_pg (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    text TEXT,\n    metadata JSONB,\n    embedding VECTOR(768) -- укажи размерность 1536 или 768 под свою модель эмбеддинга\n);\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1200,
+        -944
+      ],
+      "id": "779dc9c6-4dc7-43e9-8913-638ef313d9c8",
+      "name": "Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "V7CQr3SrIrNaHxkj",
+          "name": "kapple rag"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Создать таблицу для хранения векторов",
+        "height": 272,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1232,
+        -1056
+      ],
+      "typeVersion": 1,
+      "id": "36780b0a-d33c-4118-946d-583d7ba8b181",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this agent whenever you need to access the project details or the current progress of company or tasks that are related to company or to followup to the team based on the tasks.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=<system_role>\nТы — ProjectManager_Agent. Твоя стихия — порядок, сроки и статусы.\nТы управляешь задачами в Notion.\nТвое кредо: \"Нет ID — нет действия\".\nЯзык: Русский.\nДата: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\n</system_role>\n\n<core_objective>\nОбеспечить актуальность трекера задач. Ты создаешь, завершаешь и удаляешь задачи.\nТы — единственный источник правды о том, что нужно сделать.\n</core_objective>\n\n<data_structure>\n**Task Fields (Поля задачи):**\n1. `name` (Название): Краткая суть задачи.\n2. `status` (Статус): Текущее состояние (например, \"To Do\", \"Done\").\n3. `text` (Описание): Детали, контекст, заметки.\n</data_structure>\n\n<tool_specs>\nУ тебя есть 4 конкретных инструмента:\n1. `get_tasks`: Получить список ВСЕХ задач (возвращает массив с `id`, `name`, `status`, `text`).\n2. `create_task`: Создать новую задачу (требует `name`, опционально `text`).\n3. `complete_task`: Завершить задачу (требует `id`).\n4. `delete_task`: Удалить задачу (требует `id`).\n</tool_specs>\n\n<protocol_critical>\n### 1. ПРАВИЛО \"FETCH FIRST\" (Сначала получи список)\nТы не можешь угадать ID задачи.\nЧтобы изменить или удалить задачу, ты ОБЯЗАН сначала вызвать `get_tasks`.\n**Алгоритм:**\n1. Вызови `get_tasks`.\n2. В полученном списке найди задачу, которая совпадает по `name` или смыслу с запросом пользователя.\n3. Извлеки её `id`.\n4. Вызови `complete_task(id)` или `delete_task(id)`.\n\n### 2. ПРОВЕРКА ДУБЛЕЙ\nПеред созданием (`create_task`), желательно (но не обязательно, если срочно) глянуть `get_tasks`, чтобы не создавать дубликат \"Купить молоко\", если он уже висит.\n\n### 3. ОБРАБОТКА ОШИБОК\nЕсли `get_tasks` вернул список, но ты не нашел там нужную задачу -> Сообщи: \"Задача не найдена в списке.\"\nНе выдумывай ID.\n</protocol_critical>\n\n<workflow_actions>\n**SCENARIO: \"Закрой задачу про отчет\"**\n1. **THOUGHT**: Пользователь хочет завершить задачу. Мне нужен ID.\n2. **ACTION 1**: `get_tasks()`.\n3. **OBSERVATION**: Получен список. Ищу \"отчет\". Нашел: `{id: \"abc-123\", name: \"Сделать отчет\"}`.\n4. **ACTION 2**: `complete_task(id=\"abc-123\")`.\n5. **FINAL ANSWER**: \"Задача 'Сделать отчет' завершена.\"\n\n**SCENARIO: \"Создай задачу: Позвонить клиенту\"**\n1. **THOUGHT**: Создание новой задачи.\n2. **ACTION**: `create_task(name=\"Позвонить клиенту\", text=\"Уточнить детали\")`.\n3. **FINAL ANSWER**: \"Задача создана.\"\n</workflow_actions>\n\n<response_format>\n1. **THOUGHT**:\n   - Action: (Get/Create/Complete/Delete)\n   - Logic: (Сначала список -> Фильтр -> Действие)\n2. **TOOL CALL**: Вызов инструмента.\n3. **FINAL ANSWER**:\n   - Четко и по делу.\n   - Если задача не найдена: \"В списке нет задачи, похожей на 'X'. Вот что есть: [краткий список].\"\n</response_format>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        432
+      ],
+      "id": "db59e0c8-d2a3-450e-bc3a-abaef99c8a16",
+      "name": "project_manager"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Script for n8n Code Node to convert standard Markdown to Telegram MarkdownV2.\n */\n\n// Получаем входные данные (берем output из первого элемента)\n// Используем try-catch или безопасный доступ, если $input может быть пустым\nlet item;\ntry {\n  item = $input.first().json.output;\n} catch (e) {\n  item = '';\n}\n\nfunction toTelegramMarkdownV2(text) {\n  if (!text) return '';\n\n  // Helper to escape characters outside of code blocks\n  // Added backslash to the list of escaped chars\n  const escapeChars = (str) => str.replace(/[_*[\\]()~>#+\\-=|{}.!\\\\]/g, '\\\\$&');\n\n  // Helper to escape characters inside code blocks\n  const escapeCode = (str) => str.replace(/[`\\\\]/g, '\\\\$&');\n\n  // Helper to escape characters inside URLs\n  const escapeUrl = (str) => str.replace(/[)\\\\]/g, '\\\\$&');\n\n  // Split by Code Blocks (```...```)\n  const parts = text.split(/(```[\\s\\S]*?```)/g);\n\n  return parts.map(part => {\n    // Handle Code Blocks\n    if (part.startsWith('```') && part.endsWith('```') && part.length >= 6) {\n      return '```' + escapeCode(part.slice(3, -3)) + '```';\n    }\n\n    // Handle Inline Code (`...`)\n    const subParts = part.split(/(`[^`]+`)/g);\n    return subParts.map(subPart => {\n      if (subPart.startsWith('`') && subPart.endsWith('`') && subPart.length >= 2) {\n        return '`' + escapeCode(subPart.slice(1, -1)) + '`';\n      }\n\n      // Handle Normal Text & Formatting\n      return subPart.split('\\n').map(line => {\n        // 1. Handle Lists: Replace markers (*, -, +) with •\n        // This prevents * from being interpreted as italic start\n        if (/^\\s*[-*+]\\s/.test(line)) {\n          line = line.replace(/^(\\s*)[-*+]\\s+/, '$1• ');\n        }\n\n        // 2. Handle Headers: # Header -> *Header*\n        const headerMatch = line.match(/^(#+)\\s+(.*)$/);\n        if (headerMatch) {\n          return '*' + processFormatting(headerMatch[2]) + '*';\n        }\n\n        // 3. Process Inline Formatting\n        return processFormatting(line);\n      }).join('\\n');\n    }).join('');\n  }).join('');\n\n  function processFormatting(text) {\n    if (!text) return '';\n\n    // Regex for Markdown tokens\n    const tokenRegex = /(!?\\[.*?\\]\\(.*?\\))|(\\*\\*.*?\\*\\*)|(__.*?__)|(\\*.*?\\*)|(_.*?_)/;\n\n    const match = text.match(tokenRegex);\n    if (!match) return escapeChars(text);\n\n    const fullMatch = match[0];\n    const index = match.index;\n    const before = text.slice(0, index);\n    const after = text.slice(index + fullMatch.length);\n    let converted = '';\n\n    if (fullMatch.startsWith('!') || fullMatch.startsWith('[')) {\n      const linkMatch = fullMatch.match(/(!?)\\[(.*?)\\]\\((.*?)\\)/);\n      if (linkMatch) {\n        // Telegram V2 link: [text](url)\n        converted = `[${processFormatting(linkMatch[2])}](${escapeUrl(linkMatch[3])})`;\n      } else {\n        converted = escapeChars(fullMatch);\n      }\n    } else if (fullMatch.startsWith('**') || fullMatch.startsWith('__')) {\n      // Bold -> *text*\n      converted = '*' + processFormatting(fullMatch.slice(2, -2)) + '*';\n    } else if (fullMatch.startsWith('*') || fullMatch.startsWith('_')) {\n      // Italic -> _text_\n      converted = '_' + processFormatting(fullMatch.slice(1, -1)) + '_';\n    }\n\n    return escapeChars(before) + converted + processFormatting(after);\n  }\n}\n\n// n8n Execution Logic\nif (typeof item !== 'undefined') {\n  // Convert and store in a new field\n  const inputStr = typeof item === 'string' ? item : JSON.stringify(item);\n  const telegramMarkdown = toTelegramMarkdownV2(inputStr);\n\n  return {\n    json: {\n      output: telegramMarkdown\n    }\n  };\n}\n\nreturn {\n  json: {}\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        -128
+      ],
+      "id": "19b440e4-7df8-454d-9c3f-496e376e0f62",
+      "name": "MarkdownV2"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "documents_pg",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        -864
+      ],
+      "id": "84c8754a-afda-4aad-a11c-214b43430065",
+      "name": "Store_set",
+      "credentials": {
+        "postgres": {
+          "id": "V7CQr3SrIrNaHxkj",
+          "name": "kapple rag"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        592,
+        -448
+      ],
+      "id": "e36f843a-93f9-4737-bb7d-9a48983f1cc2",
+      "name": "Embeddings",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "=день: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\nДанные: {{ $json.content }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "table_name",
+                "value": "={{ $('data').first().json.table_name }}"
+              },
+              {
+                "name": "date",
+                "value": "={{ $today.format('yyyy-MM-dd') }}"
+              },
+              {
+                "name": "chunk",
+                "value": "={{ $json.chunk }}"
+              },
+              {
+                "name": "total_chunks",
+                "value": "={{ $('LangChain Code').item.json.total_chunks }}"
+              },
+              {
+                "name": "doc_id",
+                "value": "={{ $('Crypto').item.json.doc_id }}"
+              },
+              {
+                "name": "tags",
+                "value": "={{ $('LangChain Code').item.json.tags }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        -976
+      ],
+      "id": "06446bf6-b4ae-45be-a311-cd287681e695",
+      "name": "Data Loader"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "data"
+            },
+            {
+              "name": "table_name"
+            },
+            {
+              "name": "operation"
+            },
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -608,
+        -768
+      ],
+      "id": "ba01d94d-a254-4658-ac7b-3d40b1a21108",
+      "name": "Executed"
+    },
+    {
+      "parameters": {
+        "code": {
+          "execute": {
+            "code": "const { PromptTemplate } = require('@langchain/core/prompts');\n\nconst documentContent = $input.item.json?.data || $input.item.json?.text;\nconst maxTotalSize = 1000; // Total size including tags\n\nif (!documentContent) {\n  throw new Error('No document found in input');\n}\n\n// 1. Connect to LLM\nconst llm = await this.getInputConnectionData('ai_languageModel', 0);\n\nfunction cleanText(text) {\n  let cleaned = text.replace(/[ \\t]+/g, ' ');\n  cleaned = cleaned.replace(/\\n\\s*\\n/g, '\\n\\n');\n  return cleaned.trim();\n}\n\nconst cleanDoc = cleanText(documentContent);\n\n// 2. Generate Global Tags\nconst contextForTags = cleanDoc.substring(0, 4000);\n\nconst tagsPromptText = `Проанализируй следующий текст и выдели 5-10 ключевых тегов (ключевых слов), которые описывают тему, сущности и содержание документа.\nВерни ТОЛЬКО список тегов через запятую, без лишних слов и нумерации.\n\nТекст:\n${contextForTags}\n\nТеги:`;\n\nconst prompt = PromptTemplate.fromTemplate(tagsPromptText);\nconst chain = prompt.pipe(llm);\n\nlet globalTagsString = \"\";\nlet globalTagsArray = [];\n\ntry {\n  const response = await chain.invoke({});\n  const responseText = response.content || response.text || response.toString();\n  globalTagsString = responseText.trim();\n  globalTagsArray = globalTagsString.split(',')\n    .map(tag => tag.trim())\n    .filter(tag => tag.length > 0);\n} catch (error) {\n  globalTagsString = \"\";\n}\n\n// 3. Calculate Overhead and Max Content Size\n// Header format: \"ТЕГИ: <tags>\\n\\nСОДЕРЖАНИЕ:\\n\"\nconst headerString = `ТЕГИ: ${globalTagsString}\\n\\nСОДЕРЖАНИЕ:\\n`;\nconst tagsOverhead = headerString.length;\nconst maxContentSize = Math.max(100, maxTotalSize - tagsOverhead); // Ensure at least some space\n\n// 4. Split into Balanced Chunks\nconst chunks = [];\nlet remainingText = cleanDoc;\nconst separators = [\"\\n\\n\", \"\\n\", \". \", \"! \", \"? \", \" \"];\n\nfunction findBestSplitIndex(text, maxLen, idealLen) {\n  // Try separators in order of priority\n  for (const separator of separators) {\n    const indices = [];\n    let pos = text.indexOf(separator);\n    while (pos !== -1 && pos < maxLen) {\n      indices.push(pos);\n      pos = text.indexOf(separator, pos + 1);\n    }\n\n    if (indices.length > 0) {\n      // Find index closest to idealLen\n      // We want the split point to be AFTER the separator (pos + separator.length)\n      // So we compare (pos + separator.length) to idealLen\n      let bestIndex = -1;\n      let minDiff = Infinity;\n\n      for (const index of indices) {\n        const splitPoint = index + separator.length;\n        const diff = Math.abs(splitPoint - idealLen);\n        if (diff < minDiff) {\n          minDiff = diff;\n          bestIndex = splitPoint;\n        }\n      }\n      return bestIndex;\n    }\n  }\n  return -1; // No separator found\n}\n\nwhile (remainingText.length > 0) {\n  // Dynamic calculation for balancing\n  const currentLength = remainingText.length;\n\n  if (currentLength <= maxContentSize) {\n    chunks.push(remainingText);\n    break;\n  }\n\n  // Calculate how many chunks we need for the remaining text\n  const chunksNeeded = Math.ceil(currentLength / maxContentSize);\n  // Calculate ideal size for these chunks to be equal\n  const idealSize = Math.ceil(currentLength / chunksNeeded);\n\n  // Find best split point near idealSize, but strictly < maxContentSize\n  let splitIndex = findBestSplitIndex(remainingText, maxContentSize, idealSize);\n\n  if (splitIndex === -1) {\n    // Fallback: Hard split at maxContentSize if no separator found\n    splitIndex = maxContentSize;\n  }\n\n  const chunkContent = remainingText.substring(0, splitIndex).trim();\n  if (chunkContent) {\n    chunks.push(chunkContent);\n  }\n\n  remainingText = remainingText.substring(splitIndex).trim();\n}\n\n// 5. Format Output\nconst returnData = chunks.map((chunkContent, index) => {\n  const enrichedContent = `${headerString}${chunkContent}`;\n\n  return {\n    json: {\n      content: enrichedContent,\n      tags: globalTagsArray,\n      chunk: index + 1,\n      total_chunks: chunks.length,\n      chunk_size: chunkContent.length, // Size of content part\n      total_size: enrichedContent.length // Total size with tags\n    }\n  };\n});\n\nreturn returnData;"
+          }
+        },
+        "inputs": {
+          "input": [
+            {
+              "type": "ai_languageModel",
+              "maxConnections": 1,
+              "required": true
+            },
+            {
+              "type": "main",
+              "required": true
+            }
+          ]
+        },
+        "outputs": {
+          "output": [
+            {
+              "type": "main"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.code",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -864
+      ],
+      "id": "56c25a9f-044b-43c9-b6fc-805a7bb6122b",
+      "name": "LangChain Code"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": "documents_pg",
+        "prompt": "={{ $json.query }}",
+        "topK": 10,
+        "useReranker": true,
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "table_name",
+                "value": "={{ $json.table_name }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        -752
+      ],
+      "id": "1e500c23-851e-4b0a-82ea-afe0db5dc5e7",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "V7CQr3SrIrNaHxkj",
+          "name": "kapple rag"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "doc_id"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        16,
+        -864
+      ],
+      "id": "2ccb31fb-0424-4bf2-bb60-31f6c90682d0",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "72d0af6e-0510-4693-97e6-0b903e8f1b97",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 0.6,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1168,
+        -752
+      ],
+      "id": "262fc131-6f77-4255-9250-0cbcfc2fc027",
+      "name": "Filter",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8fcc28cf-b5a8-46a8-bafb-61eed92352e7",
+                    "leftValue": "={{ $json.operation }}",
+                    "rightValue": "search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "search"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.operation }}",
+                    "rightValue": "write",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cd7b8028-50a5-488e-ad20-d254f9d0cb41"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "write"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b620470a-8436-4282-b53e-533e9f65a72c",
+                    "leftValue": "={{ $json.operation }}",
+                    "rightValue": "read",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "read"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "202bcd5d-2ead-4141-8275-65e2f27a1bad",
+                    "leftValue": "={{ $json.operation }}",
+                    "rightValue": "remove",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "remove"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -208,
+        -800
+      ],
+      "id": "c6352f2e-491b-4f1e-ac6d-7623b819871e",
+      "name": "Operation"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DO $$\nBEGIN\n    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'documents_pg') THEN\n        EXECUTE 'DELETE FROM documents_pg WHERE metadata->>''doc_id'' LIKE ''%' || $1 || '%''';\n    END IF;\nEND\n$$;",
+        "options": {
+          "queryReplacement": "={{ $json.doc_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        -528
+      ],
+      "id": "db9889a0-39f2-49f6-bb58-a665a7587166",
+      "name": "Delete Old Data",
+      "credentials": {
+        "postgres": {
+          "id": "V7CQr3SrIrNaHxkj",
+          "name": "kapple rag"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "44d5ca30-7019-44f0-b97b-a66f21ce4567",
+              "name": "doc_id",
+              "value": "={{ $json.query?.split(\":\")[1] || $json.data?.split(\":\")[1] || null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -640
+      ],
+      "id": "32aff86b-b8cd-4253-a5e0-a365e55a9ff5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1219c858-b1c2-4a63-80c0-a39cebc1a27f",
+              "leftValue": "={{ $json.doc_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        -640
+      ],
+      "id": "af8e1881-a47d-42b1-826e-6a11da0931d0",
+      "name": "IF NULL"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea1c83af-be44-4c91-9a4a-e7ec798cdb24",
+              "name": "response",
+              "value": "Неверный формат данных! Запрос должен содержаться в поле \"query\" и иметь вид: \"doc_id:ID документа\" ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        -688
+      ],
+      "id": "1b9fa69f-1319-4fce-8c20-bb05f43854de",
+      "name": "Error"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -448
+      ],
+      "id": "947b9be4-b52f-4859-b0d9-abb5539578d6",
+      "name": "LangChain Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bpNVLcmqShSydUE7",
+          "name": "Google Gemini Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        704,
+        -448
+      ],
+      "id": "fcf65d35-07ab-4170-aba2-7ab44bf00b89",
+      "name": "Reranker",
+      "credentials": {
+        "cohereApi": {
+          "id": "If6rjFstKBoGIhPm",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6e581510-9039-4be3-b981-8cb832ae46c5",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        -752
+      ],
+      "id": "c0dd5c6d-41a7-45ee-9eb8-655937e0e6c2",
+      "name": "NOT EXIST"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "57676301-b98b-400e-83c4-850d0ffd5f5b",
+              "name": "response",
+              "value": "Поиск не дал результатов, перефразируйте или измените запрос",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -848
+      ],
+      "id": "b814615b-8d5f-472f-bea4-97047b29dc37",
+      "name": "Empty"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        -656
+      ],
+      "id": "4a77d223-5cec-438d-a027-aaf56630e8f4",
+      "name": "No Operation1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 1100
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -672
+      ],
+      "id": "fb32379d-2208-4e0d-9b17-d378937d64f8",
+      "name": "Splitter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0f964689-6dbd-47fe-8c41-ca095a9d8704",
+              "name": "table_name",
+              "value": "={{ $json?.table_name?.toLowerCase() || \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -768
+      ],
+      "id": "052eff33-7aef-484b-a702-4b7d01a02521",
+      "name": "data"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        -16
+      ],
+      "id": "6bd6917a-9881-4ccb-9a4c-18eb0e722cab",
+      "name": "Telegram Trigger",
+      "webhookId": "fb4622b9-785c-41f1-9fdb-4faefcf2b01d",
+      "credentials": {
+        "telegramApi": {
+          "id": "54IqW9O2VEmi5oWC",
+          "name": "babycom_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $workflow.id }}",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/=%7B%7B%20$workflow.id%20%7D%7D"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "operation": "search",
+            "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('query', `Поисковой запрос`, 'string') }}",
+            "data": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data', `Системная инструкция`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "table_name",
+              "displayName": "table_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "operation",
+              "displayName": "operation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "query",
+              "displayName": "query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1936,
+        800
+      ],
+      "id": "ce985a22-7fe1-4cfc-92ef-23be5b197030",
+      "name": "Google_Search"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $json.query }}\"\n        }\n      ]\n    }\n  ],\n  \"systemInstruction\": {\n    \"parts\": [\n      {\n        \"text\": \"{{ $json.data }}\"\n      }\n    ]\n  },\n  \"tools\": [\n    {\n      \"google_search\": {}\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        16,
+        -1152
+      ],
+      "id": "339ac4d9-33f0-4e07-90b1-ce3fced185d7",
+      "name": "Google Search",
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9ULgmCGqlRjuj3XN",
+          "name": "Google Viet New"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем ответ от предыдущей ноды\nconst response = $input.first().json;\n\n// Проверяем, есть ли кандидаты и метаданные\nconst candidate = response.candidates && response.candidates[0];\nif (!candidate) return items;\n\nlet text = candidate.content.parts[0].text;\nconst metadata = candidate.groundingMetadata;\n\nlet sourcesList = \"\";\n\n// Если есть данные о заземлении (источники)\nif (metadata && metadata.groundingChunks) {\n  const chunks = metadata.groundingChunks;\n\n  sourcesList = \"**Источники:**\\n\";\n  chunks.forEach((chunk, index) => {\n    if (chunk.web) {\n      sourcesList += `${index + 1}. [${chunk.web.title}](${chunk.web.uri})\\n`;\n    }\n  });\n}\n\n// Функция для разбивки текста на части по 4000 символов\nfunction splitMessage(content) {\n  const MAX_LENGTH = 4000;\n  const parts = [];\n\n  while (content.length > MAX_LENGTH) {\n    // Ищем ближайший перенос строки в пределах лимита, чтобы не резать слова\n    let sliceIndex = content.lastIndexOf('\\n', MAX_LENGTH);\n\n    // Если переноса нет, ищем пробел\n    if (sliceIndex === -1) {\n      sliceIndex = content.lastIndexOf(' ', MAX_LENGTH);\n    }\n\n    // Если вообще нет разделителей (очень длинное слово), режем жестко\n    if (sliceIndex === -1) {\n      sliceIndex = MAX_LENGTH;\n    }\n\n    parts.push(content.slice(0, sliceIndex));\n    content = content.slice(sliceIndex).trim(); // Убираем пробелы в начале следующего куска\n  }\n\n  if (content.length > 0) {\n    parts.push(content);\n  }\n\n  return parts;\n}\n\n// Формируем итоговый массив сообщений\nconst results = [];\n\n// 1. Разбиваем и добавляем основной текст\nconst textParts = splitMessage(text);\ntextParts.forEach((part, index) => {\n  results.push({\n    json: {\n      output_text: part,\n      type: 'content',\n      part_number: index + 1,\n      total_parts: textParts.length\n    }\n  });\n});\n\n// 2. Разбиваем и добавляем источники (на случай если их очень много)\nif (sourcesList && sourcesList.length > 0) {\n  const sourceParts = splitMessage(sourcesList);\n  sourceParts.forEach((part, index) => {\n    results.push({\n      json: {\n        output_text: part,\n        type: 'sources',\n        part_number: index + 1,\n        total_parts: sourceParts.length\n      }\n    });\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -1152
+      ],
+      "id": "f9ee266e-d723-454e-bc78-7323f1a04229",
+      "name": "format"
+    },
+    {
+      "parameters": {
+        "chatId": "-1002736117626",
+        "text": "={{ $json.output || \"Пустой ответ\" }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "disable_notification": true,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        -1280
+      ],
+      "id": "f0c056fe-96bf-4cc5-959e-1cb2a42a07d4",
+      "name": "Send search",
+      "webhookId": "ebd816ba-dc3a-459f-8fe0-1805b4e3eb38",
+      "credentials": {
+        "telegramApi": {
+          "id": "DkkkalY1kVUIw4Zy",
+          "name": "babycom_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "/**\n * Script for n8n Code Node to convert standard Markdown to Telegram MarkdownV2.\n */\n\n// Получаем входные данные (берем output из первого элемента)\n// Используем try-catch или безопасный доступ, если $input может быть пустым\nlet item;\ntry {\n  item = $input.item.json.output_text;\n} catch (e) {\n  item = '';\n}\n\nfunction toTelegramMarkdownV2(text) {\n  if (!text) return '';\n\n  // Helper to escape characters outside of code blocks\n  // Added backslash to the list of escaped chars\n  const escapeChars = (str) => str.replace(/[_*[\\]()~>#+\\-=|{}.!\\\\]/g, '\\\\$&');\n\n  // Helper to escape characters inside code blocks\n  const escapeCode = (str) => str.replace(/[`\\\\]/g, '\\\\$&');\n\n  // Helper to escape characters inside URLs\n  const escapeUrl = (str) => str.replace(/[)\\\\]/g, '\\\\$&');\n\n  // Split by Code Blocks (```...```)\n  const parts = text.split(/(```[\\s\\S]*?```)/g);\n\n  return parts.map(part => {\n    // Handle Code Blocks\n    if (part.startsWith('```') && part.endsWith('```') && part.length >= 6) {\n      return '```' + escapeCode(part.slice(3, -3)) + '```';\n    }\n\n    // Handle Inline Code (`...`)\n    const subParts = part.split(/(`[^`]+`)/g);\n    return subParts.map(subPart => {\n      if (subPart.startsWith('`') && subPart.endsWith('`') && subPart.length >= 2) {\n        return '`' + escapeCode(subPart.slice(1, -1)) + '`';\n      }\n\n      // Handle Normal Text & Formatting\n      return subPart.split('\\n').map(line => {\n        // 1. Handle Lists: Replace markers (*, -, +) with •\n        // This prevents * from being interpreted as italic start\n        if (/^\\s*[-*+]\\s/.test(line)) {\n          line = line.replace(/^(\\s*)[-*+]\\s+/, '$1• ');\n        }\n\n        // 2. Handle Headers: # Header -> *Header*\n        const headerMatch = line.match(/^(#+)\\s+(.*)$/);\n        if (headerMatch) {\n          return '*' + processFormatting(headerMatch[2]) + '*';\n        }\n\n        // 3. Process Inline Formatting\n        return processFormatting(line);\n      }).join('\\n');\n    }).join('');\n  }).join('');\n\n  function processFormatting(text) {\n    if (!text) return '';\n\n    // Regex for Markdown tokens\n    const tokenRegex = /(!?\\[.*?\\]\\(.*?\\))|(\\*\\*.*?\\*\\*)|(__.*?__)|(\\*.*?\\*)|(_.*?_)/;\n\n    const match = text.match(tokenRegex);\n    if (!match) return escapeChars(text);\n\n    const fullMatch = match[0];\n    const index = match.index;\n    const before = text.slice(0, index);\n    const after = text.slice(index + fullMatch.length);\n    let converted = '';\n\n    if (fullMatch.startsWith('!') || fullMatch.startsWith('[')) {\n      const linkMatch = fullMatch.match(/(!?)\\[(.*?)\\]\\((.*?)\\)/);\n      if (linkMatch) {\n        // Telegram V2 link: [text](url)\n        converted = `[${processFormatting(linkMatch[2])}](${escapeUrl(linkMatch[3])})`;\n      } else {\n        converted = escapeChars(fullMatch);\n      }\n    } else if (fullMatch.startsWith('**') || fullMatch.startsWith('__')) {\n      // Bold -> *text*\n      converted = '*' + processFormatting(fullMatch.slice(2, -2)) + '*';\n    } else if (fullMatch.startsWith('*') || fullMatch.startsWith('_')) {\n      // Italic -> _text_\n      converted = '_' + processFormatting(fullMatch.slice(1, -1)) + '_';\n    }\n\n    return escapeChars(before) + converted + processFormatting(after);\n  }\n}\n\n// n8n Execution Logic\nif (typeof item !== 'undefined') {\n  // Convert and store in a new field\n  const inputStr = typeof item === 'string' ? item : JSON.stringify(item);\n  const telegramMarkdown = toTelegramMarkdownV2(inputStr);\n\n  return {\n    json: {\n      output: telegramMarkdown\n    }\n  };\n}\n\nreturn {\n  json: {}\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -1152
+      ],
+      "id": "23f7d4e7-a75f-455b-8606-51f6c8043ec3",
+      "name": "V2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "66cc202d-f337-4427-9625-33f5d18babe7",
+              "name": "output",
+              "value": "={{ $('Google Search').item.json?.candidates[0]?.content?.parts[0]?.text || \"Пустой результат\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -1280
+      ],
+      "id": "603ede6c-e556-4e0c-a440-970451916843",
+      "name": "Response"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -1280
+      ],
+      "id": "e38b0d8d-b8b5-4b78-a727-445379b46b55",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fbb2258a-cd4c-4209-b19c-3eee41cc73ee",
+              "name": "output",
+              "value": "Данные сохранены",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -960
+      ],
+      "id": "97c68dd7-39da-48b4-bd47-103cc5d034a5",
+      "name": "Saved"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -960
+      ],
+      "id": "55e4d25b-cf7d-40ec-8e2b-6f2b3d2fbb5b",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "height": 672,
+        "width": 1664
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        16,
+        -1008
+      ],
+      "typeVersion": 1,
+      "id": "634c842a-3100-44ca-a719-b5367e67a1c2",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool whenever you need to do any actions regarding calendar, schedule and appoinment",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {
+          "systemMessage": "=<system_role>\nТы — Calendar_Agent, хранитель времени Акиля.\nТвоя задача — безупречное управление расписанием. Ты не допускаешь накладок, путаницы в часовых поясах и пропущенных встреч.\nЯзык: Русский.\nТекущая дата: {{ $today.toFormat(\"DDDD\", { locale: 'ru' }) }}\n</system_role>\n\n<core_objective>\nУправление событиями в календаре: создание, поиск, перенос и удаление встреч.\nТы гарантируешь, что Акиль будет в нужном месте в нужное время.\n</core_objective>\n\n<tool_specs>\nТы используешь инструменты для работы с календарем (Google Calendar).\n\n**Ключевые параметры:**\n- `summary` (Название): Должно быть кратким, но понятным.\n- `start_time` / `end_time`: Формат ISO 8601 (YYYY-MM-DDTHH:mm:ss).\n- `description`: Сюда пиши повестку (agenda), ссылки на Zoom/Meet и контекст.\n- `attendees`: Список email участников.\n</tool_specs>\n\n<protocol_action>\n### 1. ПРОВЕРКА КОНФЛИКТОВ (CRITICAL)\nПеред созданием ЛЮБОЙ встречи ты ОБЯЗАН проверить, свободно ли это время.\n- **Шаг 1**: `list_events` на указанный день.\n- **Шаг 2**: Если есть пересечение -> Предложи альтернативу или спроси подтверждение (\"Там уже стоит 'Обед', ставим поверх?\").\n- **Шаг 3**: Только если свободно (или получено добро) -> `create_event`.\n\n### 2. ОБРАБОТКА ВРЕМЕНИ\nПользователи говорят нечетко (\"завтра в 3\"). Ты должен быть точен.\n- \"Завтра\" = Текущая дата + 1 день.\n- \"В 3\" = 15:00 (по умолчанию PM для встреч, если не утро).\n- Всегда уточняй часовой пояс, если встреча с международными партнерами.\n\n### 3. СОЗДАНИЕ (Create)\n- Название: \"Встреча с [Имя]: [Тема]\"\n- Описание: Добавь \"Цель встречи: ...\" и \"Материалы: ...\".\n\n### 4. ПОИСК (Read)\n- Если спрашивают \"Что у меня завтра?\", выводи список хронологически:\n  - `10:00 - 11:00`: Дейли\n  - `14:00 - 15:00`: Встреча с клиентом\n</protocol_action>\n\n<response_format>\n1. **THOUGHT**:\n   - Intent: (Create/Check/Reschedule)\n   - Date Logic: (Конвертация \"послезавтра\" в дату)\n   - Conflict Check: (Свободно?)\n2. **TOOL CALL**: Вызов инструмента.\n3. **FINAL ANSWER**:\n   - ХОРОШО: \"Встреча 'Маркетинг' запланирована на Вторник, 15 октября, 14:00.\"\n   - ПЛОХО: \"На это время уже стоит 'Стоматолог'. Может, в 16:00?\"\n</response_format>\n\n<examples>\nUser: \"Забей встречу с Димой на завтра в 2 часа дня по поводу сайта.\"\nThought: Завтра = [Date+1]. 2 часа дня = 14:00. Проверяю слоты.\nTool Call: list_events(timeMin=\"[Date+1]T00:00:00\", timeMax=\"[Date+1]T23:59:59\")\n... (Пусто) ...\nThought: Свободно. Создаю.\nTool Call: create_event(summary=\"Встреча с Димой: Сайт\", start=\"[Date+1]T14:00:00\", end=\"[Date+1]T15:00:00\")\n</examples>"
+        }
+      },
+      "id": "ba3c3141-b7f2-46b9-a344-ac47865e5197",
+      "name": "calendar_agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "position": [
+        1872,
+        432
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "f5d6c46f-55f2-4182-ab4c-774b5af0fa7c",
+      "name": "Get all event",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2176,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "a8cdf6cc-4779-4ec7-aaf4-ec8b5761b7ac",
+      "name": "Delete event",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2432,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "339a9979-80a5-4ec7-bca7-a347e4a8d614",
+      "name": "Get a single event",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2848,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', ``, 'boolean') }}",
+        "updateFields": {}
+      },
+      "id": "65e43acb-1831-45da-8f05-13f4cd29f95e",
+      "name": "Update event",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2544,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "id": "9dfed425-5064-44b4-83ed-410db9422ddd",
+      "name": "Availablity operation agent",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2688,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "pn3v4fsfliis4tqgchd1qmcmc4@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Мероприятие"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Attendees', ``, 'string') }}"
+          ],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "id": "ff1d6095-18c8-4b97-b5d9-cefa0017ec05",
+      "name": "Create Event with attendee",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2304,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "exempal@gmail.com",
+          "mode": "list",
+          "cachedResultName": "exempal@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "id": "8203d3a1-d8da-45ec-b118-d19d3c44a0a3",
+      "name": "Create Event without attendee",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        3008,
+        800
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "ITt5OhBmx0jjQur5",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get voice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "group",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "MarkdownV2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memory_base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "store": {
+      "ai_tool": [
+        [
+          {
+            "node": "memory_base",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "group": {
+      "main": [
+        [
+          {
+            "node": "Main",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main": {
+      "main": [
+        [
+          {
+            "node": "text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "memory_base",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "project_manager",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "project_manager",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete task": {
+      "ai_tool": [
+        [
+          {
+            "node": "project_manager",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "complete task": {
+      "ai_tool": [
+        [
+          {
+            "node": "project_manager",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create task": {
+      "ai_tool": [
+        [
+          {
+            "node": "project_manager",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get tasks": {
+      "ai_tool": [
+        [
+          {
+            "node": "project_manager",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "research_Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "research_Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe": {
+      "main": [
+        [
+          {
+            "node": "text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "research_Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "calendar_agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a photo": {
+      "main": [
+        [
+          {
+            "node": "Analyze",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get voice": {
+      "main": [
+        [
+          {
+            "node": "Transcribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze": {
+      "main": [
+        [
+          {
+            "node": "image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "image": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get document": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF": {
+      "main": [
+        [
+          {
+            "node": "DOC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DOC": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "project_manager": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MarkdownV2": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store_set": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store_set",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Store_set",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executed": {
+      "main": [
+        [
+          {
+            "node": "data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LangChain Code": {
+      "main": [
+        [
+          {
+            "node": "Store_set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "LangChain Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "NOT EXIST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Operation": {
+      "main": [
+        [
+          {
+            "node": "Google Search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "IF NULL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF NULL": {
+      "main": [
+        [
+          {
+            "node": "Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Old Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LangChain Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LangChain Code",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NOT EXIST": {
+      "main": [
+        [
+          {
+            "node": "Empty",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data": {
+      "main": [
+        [
+          {
+            "node": "Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google_Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "research_Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search": {
+      "main": [
+        [
+          {
+            "node": "format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format": {
+      "main": [
+        [
+          {
+            "node": "V2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send search": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "V2": {
+      "main": [
+        [
+          {
+            "node": "Send search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calendar_agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all event": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete event": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a single event": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update event": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availablity operation agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event with attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event without attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "calendar_agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bfee1e9947ac5f7d2abd5472a01de5a0b8a85dc5269317edf7f2b2f30744c2a5"
+  }
+}
