@@ -372,27 +372,6 @@
     },
     {
       "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "dasds",
-        "tableName": "test_chat"
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
-      "typeVersion": 1.3,
-      "position": [
-        1040,
-        800
-      ],
-      "id": "6c6a73db-32ad-49ec-8035-c9e706f4e339",
-      "name": "Memory",
-      "credentials": {
-        "postgres": {
-          "id": "lpNa95RRH3GHBsLb",
-          "name": "minicrm_session"
-        }
-      }
-    },
-    {
-      "parameters": {
         "operation": "archive",
         "pageId": {
           "__rl": true,
@@ -2208,17 +2187,6 @@
         [
           {
             "node": "AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "project_manager",
             "type": "ai_memory",
             "index": 0
           }
